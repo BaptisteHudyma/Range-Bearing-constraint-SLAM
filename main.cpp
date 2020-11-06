@@ -43,9 +43,7 @@ Interval get_angle(IntervalVector robotPosition, IntervalVector markerPosition) 
 
 void range_bearing_SLAM () {
     //SLAM based on range and bearing, a posteriori result.
-
-
-    srand((unsigned)time(NULL)); 
+    srand((unsigned)time(NULL));
     const bool DISPLAY_PIES = false;    //display a pie pointing to observed obstacle
 
     double dt = 0.05;
@@ -54,12 +52,10 @@ void range_bearing_SLAM () {
 
     vector<IntervalVector> landmarks = get_marker_positions();
 
-    //ground truth trajectory
-    Vector x0({0, 0, 2});
+    Vector x0({0, 0, 2});   //starting position
     Trajectory u = Trajectory(tdomain, TFunction("(3 * sqr(sin(t)) + t/100) + [-0.3,0.3]"), dt);
 
-
-    // Actual trajectories (state + derivative)
+    //Truth trajectories (position + velocity)
     TrajectoryVector vTruth(3);
     TrajectoryVector xTruth(3);
     set_v_x_truth(xTruth, vTruth, u, x0);
@@ -71,21 +67,15 @@ void range_bearing_SLAM () {
 
 
 
-
     //Display
     vibes::beginDrawing();
-    VIBesFigMap fig("Localization with date association");
+    VIBesFigMap fig("SLAM with range bearing observations");
 
     fig.set_properties(100, 100, 600, 300);
     fig.add_tube(&x, "tube x", 0, 1);
     fig.add_trajectory(&xTruth, "x*", 0, 1, "red");
 
-
-    fig.smooth_tube_drawing(true);
-    fig.show(0.5);
-
-
-    //variables
+    //landmark variables
     vector<IntervalVector> ulandmarks;  //new landmarks positions
     vector<int> landmarkViewCount;      //number of times a landmark was observed
     for(unsigned int i = 0; i < landmarks.size(); i++) {
@@ -95,7 +85,6 @@ void range_bearing_SLAM () {
         //display beacons
         fig.add_beacon(landmarks[i], 0.1);
     }
-
     fig.smooth_tube_drawing(true);
     fig.show(0.5);
 
@@ -106,7 +95,7 @@ void range_bearing_SLAM () {
 
     //Solver
     ContractorNetwork cn;
-    cn.add(ctc::deriv, {x, v});
+    cn.add(ctc::deriv, {x, v}); //position is derived from velocity
 
     for(double t = 0.0; t < tdomain.ub(); t += 2 * dt) {
         const unsigned int landmarkIndex = (rand()%4);    //random landmark
@@ -154,7 +143,6 @@ void range_bearing_SLAM () {
     }
 
     fig.show();
-
     vibes::endDrawing();
 }
 
@@ -193,18 +181,12 @@ void range_bearing_SLAM_rt () {
 
     //Display
     vibes::beginDrawing();
-    VIBesFigMap fig("Localization with date association");
-
+    VIBesFigMap fig("SLAM with range bearing observations");
     fig.set_properties(100, 100, 600, 300);
     fig.add_tube(&x, "tube x", 0, 1);
     fig.add_trajectory(&xTruth, "x*", 0, 1, "red");
-
-
-    fig.smooth_tube_drawing(true);
-    fig.show(0.5);
-
-
-    //variables
+    
+    //landmark variables
     vector<IntervalVector> ulandmarks;  //new landmarks positions
     vector<int> landmarkViewCount;      //number of times a landmark was observed
     for(unsigned int i = 0; i < landmarks.size(); i++) {
@@ -214,6 +196,11 @@ void range_bearing_SLAM_rt () {
         //display beacons
         fig.add_beacon(landmarks[i], 0.1);
     }
+    fig.smooth_tube_drawing(true);
+    fig.show(0.5);
+
+
+
 
     //contractor functions
     CtcFunction ctc_plus(Function("a", "b", "c", "a+b-c")); // a+b=c
@@ -274,16 +261,14 @@ void range_bearing_SLAM_rt () {
         fig.draw_box(ulandmarks[i]);
         std::cout << "Saw landmark " << i << " " << landmarkViewCount[i] << " times" << std::endl;
     }
-
     fig.show();
-
     vibes::endDrawing();
 }
 
 
 int main() {
     range_bearing_SLAM();
-
+    //range_bearing_SLAM_rt();
     return 0;
 }
 
