@@ -108,7 +108,7 @@ void range_bearing_SLAM () {
     ContractorNetwork cn;
     cn.add(ctc::deriv, {x, v});
 
-    for(double t = 0.0; t < tdomain.ub(); t += dt) {
+    for(double t = 0.0; t < tdomain.ub(); t += 2 * dt) {
         const unsigned int landmarkIndex = (rand()%4);    //random landmark
         landmarkViewCount[landmarkIndex] += 1;
 
