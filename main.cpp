@@ -212,6 +212,8 @@ void range_bearing_SLAM_rt () {
     double prev_t_obs = tdomain.lb();
     for(double t = tdomain.lb() ; t < tdomain.ub() ; t += dt) {
         if(t - prev_t_obs > 2 * dt) { // new observation each 2*dt
+            prev_t_obs = t;
+
             const unsigned int landmarkIndex = (rand()%4);    //random landmark
             landmarkViewCount[landmarkIndex] += 1;
 
