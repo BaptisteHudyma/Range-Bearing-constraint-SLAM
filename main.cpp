@@ -97,7 +97,7 @@ void range_bearing_SLAM () {
     ContractorNetwork cn;
     cn.add(ctc::deriv, {x, v}); //position is derived from velocity
 
-    for(double t = 0.0; t < tdomain.ub(); t += 2 * dt) {
+    for(double t = tdomain.lb(); t < tdomain.ub(); t += 2 * dt) {
         const unsigned int landmarkIndex = (rand()%4);    //random landmark
         landmarkViewCount[landmarkIndex] += 1;
 
@@ -269,8 +269,8 @@ void range_bearing_SLAM_rt () {
 
 
 int main() {
-    range_bearing_SLAM();
-    //range_bearing_SLAM_rt();
+    //range_bearing_SLAM();
+    range_bearing_SLAM_rt();
     return 0;
 }
 
