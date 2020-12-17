@@ -18,8 +18,8 @@ void range_bearing_SLAM (SLAM_Contractor& cn, const TrajectoryVector& xTruth, ve
         IntervalVector trueLandmarkPos = landmarks[landmarkIndex];
         IntervalVector trueRobotPosition = xTruth(t);
         //get distance and angle to landmark
-        Interval angleMeasure = get_angle_measurement(trueRobotPosition, trueLandmarkPos);
-        Interval distMeasure = get_range_measurement(trueRobotPosition, trueLandmarkPos);
+        Interval angleMeasure = get_angle_measurement(trueRobotPosition, trueLandmarkPos, 0.0);
+        Interval distMeasure = get_range_measurement(trueRobotPosition, trueLandmarkPos, 0.0);
 
         if (DISPLAY_PIES) {     //display the view to the observed marker 
             fig.draw_pie(trueRobotPosition[0].mid(), trueRobotPosition[1].mid(), distMeasure, angleMeasure + trueRobotPosition[2], "black");
@@ -41,22 +41,24 @@ void range_bearing_SLAM_rt (SLAM_Contractor& cn, const TrajectoryVector& xTruth,
     double prev_t_obs = tdomain.lb();
     for(double t = tdomain.lb() ; t < tdomain.ub() ; t += dt) {
         if(t - prev_t_obs > 2 * dt) { // new observation each 2*dt
-            prev_t_obs = t;
-            const unsigned int landmarkIndex = (rand()%4);    //random landmark
-            //get true robot and landmark position
-            IntervalVector trueLandmarkPos = landmarks[landmarkIndex];
-            IntervalVector trueRobotPosition = xTruth(t);
-            //get distance and angle to landmark
-            Interval angleMeasure = get_angle_measurement(trueRobotPosition, trueLandmarkPos);
-            Interval distMeasure = get_range_measurement(trueRobotPosition, trueLandmarkPos);
-
-            if (DISPLAY_PIES) {     //display the view to the observed marker 
-                fig.draw_pie(trueRobotPosition[0].mid(), trueRobotPosition[1].mid(), distMeasure, angleMeasure + trueRobotPosition[2], "black");
-                fig.draw_pie(trueRobotPosition[0].mid(), trueRobotPosition[1].mid(), (Interval(0.01) | distMeasure), angleMeasure + trueRobotPosition[2], "gray");
-            }
-
-            //add observation to our contractor network
-            cn.add_observation(Interval(t), landmarkIndex, angleMeasure, distMeasure);
+            //for(int i = 0; i < 5; i++) {     
+                prev_t_obs = t;
+                const unsigned int landmarkIndex = (rand()%5);    //random landmark
+                //get true robot and landmark position
+                IntervalVector trueLandmarkPos = landmarks[landmarkIndex];
+                IntervalVector trueRobotPosition = xTruth(t);
+                //get distance and angle to landmark
+                Interval angleMeasure = get_angle_measurement(trueRobotPosition, trueLandmarkPos, 0.05);
+                Interval distMeasure = get_range_measurement(trueRobotPosition, trueLandmarkPos, 0.05);
+    
+                if (DISPLAY_PIES) {     //display the view to the observed marker 
+                    fig.draw_pie(trueRobotPosition[0].mid(), trueRobotPosition[1].mid(), distMeasure, angleMeasure + trueRobotPosition[2], "black");
+                    fig.draw_pie(trueRobotPosition[0].mid(), trueRobotPosition[1].mid(), (Interval(0.01) | distMeasure), angleMeasure + trueRobotPosition[2], "gray");
+                }
+    
+                //add observation to our contractor network
+                cn.add_observation(Interval(t), landmarkIndex, angleMeasure, distMeasure);
+            //}
         }
         //display current robot position
         fig.draw_box(cn.get_t_observation(t, iterdt));
@@ -76,7 +78,7 @@ int main() {
     vector<IntervalVector> landmarks = get_marker_positions();
 
     Vector x0Truth({0, 0, 2});   //starting position
-    Trajectory u = Trajectory(tdomain, TFunction("(3 * sqr(sin(t)) + t/100) + [-0.3,0.3]"), dt);
+    Trajectory u = Trajectory(tdomain, TFunction("(3 * sqr(sin(t)) + t/100) + [-0.1,0.1]"), dt);
 
     //Truth trajectories (position + velocity)
     TrajectoryVector vTruth(3);
@@ -84,10 +86,10 @@ int main() {
     set_v_x_truth(xTruth, vTruth, u, x0Truth);
 
     //real trajectories (tubes)
-    IntervalVector x0 = IntervalVector(x0Truth).inflate(0.2);   //add uncertainty on start position
+    IntervalVector x0 = IntervalVector(x0Truth);//.inflate(0.2);   //add uncertainty on start position
     TubeVector v(tdomain, dt, 3);   //v is the measured velocity
     TubeVector x(tdomain, dt, 3);   //for now, x is the position deduced from dead reckoning
-    set_v_x_tubes(x, v, xTruth, u, x0, tdomain, dt);
+    set_v_x_tubes(x, v, xTruth, u, x0, tdomain, dt, 0.0, 0.0, 0.0);
 
 
     //Display

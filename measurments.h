@@ -5,9 +5,10 @@
 vector<IntervalVector> get_marker_positions() {
     vector<IntervalVector> landmarks;
     landmarks.push_back(IntervalVector({Interval(6), Interval(12)}));
-    landmarks.push_back(IntervalVector({Interval(-2), Interval(-5)}));
-    landmarks.push_back(IntervalVector({Interval(-3), Interval(20)}));
-    landmarks.push_back(IntervalVector({Interval(3), Interval(4)}));
+    landmarks.push_back(IntervalVector({Interval(-2), Interval(-8)}));
+    landmarks.push_back(IntervalVector({Interval(-10), Interval(10)}));
+    landmarks.push_back(IntervalVector({Interval(20), Interval(0)}));
+    landmarks.push_back(IntervalVector({Interval(5), Interval(-15)}));
     return landmarks;
 }
 
@@ -22,10 +23,10 @@ void set_v_x_truth(TrajectoryVector& xTruth, TrajectoryVector& vTruth, const Tra
 }
 
 // Actual dead reckoning trajectories (state + derivative)
-void set_v_x_tubes(TubeVector& x, TubeVector& v, const TrajectoryVector& xTruth, const Trajectory& u, const IntervalVector& x0, const Interval& tdomain, const double dt) {
-    RandTrajectory nTheta(tdomain, dt, Interval(-0.03, 0.03));
-    v[2] = Tube(u + nTheta, dt).inflate(0.03);
-    x[2] = Tube(xTruth[2] + nTheta, dt).inflate(0.03); 
+void set_v_x_tubes(TubeVector& x, TubeVector& v, const TrajectoryVector& xTruth, const Trajectory& u, const IntervalVector& x0, const Interval& tdomain, const double dt, const double xError, const double vError, const double tDomainError) {
+    RandTrajectory nTheta(tdomain, dt, Interval(-tDomainError, tDomainError));
+    v[2] = Tube(u + nTheta, dt).inflate(vError);
+    x[2] = Tube(xTruth[2] + nTheta, dt).inflate(xError); 
     v[0] = 10 * cos(x[2]);
     v[1] = 10 * sin(x[2]);
     x[0] = v[0].primitive() + x0[0];
@@ -34,18 +35,18 @@ void set_v_x_tubes(TubeVector& x, TubeVector& v, const TrajectoryVector& xTruth,
 
 
 //return distance to an obstacle from robot position
-const Interval get_range_measurement(const IntervalVector& robotCurrentPosition, const IntervalVector& markerPosition) {
+const Interval get_range_measurement(const IntervalVector& robotCurrentPosition, const IntervalVector& markerPosition, const double uncertainty) {
     Interval dstVec = sqrt(sqr(robotCurrentPosition[0] - markerPosition[0]) + sqr(robotCurrentPosition[1] - markerPosition[1]));
     //add uncertainty in measurements
-    dstVec.inflate(0.03);
+    dstVec.inflate(uncertainty);
     return dstVec;
 }
 
 //return angle to an obstacle from robot position
-const Interval get_angle_measurement(const IntervalVector& robotCurrentPosition, const IntervalVector& markerPosition) {
+const Interval get_angle_measurement(const IntervalVector& robotCurrentPosition, const IntervalVector& markerPosition, const double uncertainty) {
     Interval markerAngle = atan2( (markerPosition[1] - robotCurrentPosition[1]), (markerPosition[0] - robotCurrentPosition[0]) ) - robotCurrentPosition[2];
     //add uncertainty in measurements
-    markerAngle.inflate(0.03);
+    markerAngle.inflate(uncertainty);
     return markerAngle;
 }
 

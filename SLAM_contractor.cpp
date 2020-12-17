@@ -4,6 +4,8 @@ using namespace tubex;
 
 SLAM_Contractor::SLAM_Contractor(const unsigned int landmarkCount, const TubeVector& x, const TubeVector& speedMeasurments) : cn(), ctc_plus(Function("a", "b", "c", "a+b-c")), ctc_minus(Function("a", "b", "c", "a-b-c")), robotPosition(x), robotVelocity(speedMeasurments)   {     
     
+    //cn.add(ctc::eval, {0, currentRobotPosition, robotPosition, robotVelocity});
+    cn.add(ctc::deriv, {robotPosition, robotVelocity});
     for(unsigned int i = 0; i < landmarkCount; i+=1) {
         //add empty landmark positions
         observedLandmarkPositions.push_back(IntervalVector(2));
